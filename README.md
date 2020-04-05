@@ -118,6 +118,7 @@ Here are the parameters availble for inference:
 --model        Path to the trained model.
 --mode         Mode to be used, choose either `multiscale` or `sliding` for inference (multiscale is the default behaviour).
 --config       The config file used for training the model.
+--save_mask    Save masks as .npy files for later use (eg. CRF post processing)
 ```
 
 **Trained Model:**
