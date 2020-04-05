@@ -84,12 +84,18 @@ def save_images(image, mask, output_path, image_file, palette):
     image_file = os.path.basename(image_file).split('.')[0]
     colorized_mask = colorize_mask(mask, palette)
     colorized_mask.save(os.path.join(output_path, image_file+'.png'))
+
     # output_im = Image.new('RGB', (w*2, h))
     # output_im.paste(image, (0,0))
     # output_im.paste(colorized_mask, (w,0))
     # output_im.save(os.path.join(output_path, image_file+'_colorized.png'))
     # mask_img = Image.fromarray(mask, 'L')
     # mask_img.save(os.path.join(output_path, image_file+'.png'))
+
+def save_mask(mask, output_path, mask_file):
+	mask_file = os.path.basename(mask_file).split('.')[0]
+	print('image_file', mask_file)
+	np.save(os.path.join(output_path, 'masks', mask_file), mask)
 
 def main():
     args = parse_arguments()
@@ -124,7 +130,12 @@ def main():
 
     if not os.path.exists('outputs'):
         os.makedirs('outputs')
+    if args.save_mask:
+	    if not os.path.exists('outputs/masks'):
+	        os.makedirs('outputs/masks')
 
+
+    print(os.path.join(args.images, f'*.{args.extension}'))
     image_files = sorted(glob(os.path.join(args.images, f'*.{args.extension}')))
     with torch.no_grad():
         tbar = tqdm(image_files, ncols=100)
@@ -140,7 +151,10 @@ def main():
                 prediction = model(input.to(device))
                 prediction = prediction.squeeze(0).cpu().numpy()
             prediction = F.softmax(torch.from_numpy(prediction), dim=0).argmax(0).cpu().numpy()
+            
             save_images(image, prediction, args.output, img_file, palette)
+            if args.save_mask:
+            	save_mask(prediction, args.output, img_file)
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Inference')
@@ -156,6 +170,7 @@ def parse_arguments():
                         help='Output Path')
     parser.add_argument('-e', '--extension', default='jpg', type=str,
                         help='The extension of the images to be segmented')
+    parser.add_argument('-k', '--save_mask', action = 'store_true')
     args = parser.parse_args()
     return args
 
